@@ -1,19 +1,16 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Report, Confirm } from 'notiflix';
 import s from './NewContactForm.module.css';
 
-class ContactForm extends Component {
-  state = {
-    name: '',
-    number: '',
-  };
+function ContactForm(props) {
+  const [state, setState] = useState({ name: '', number: '' });
 
-  handleSubmit = e => {
+  const handleSubmit = e => {
     e.preventDefault();
 
-    const { name } = this.state;
-    const names = this.props.contactsArr;
+    const { name } = state;
+    const names = props.contactsArr;
 
     if (names.includes(name.toLowerCase())) {
       Report.warning(
@@ -27,7 +24,7 @@ class ContactForm extends Component {
       return;
     }
 
-    if (this.state.number.length < 7 || this.state.number.length > 12) {
+    if (state.number.length < 7 || state.number.length > 12) {
       Confirm.show(
         'Unknown phone number format',
         'Are you sure you want to keep it?',
@@ -35,8 +32,8 @@ class ContactForm extends Component {
         'No',
         () => {
           // При подтверждении
-          this.props.Submit(this.state);
-          this.reset();
+          props.Submit(e);
+          reset();
         },
         () => {
           // при отказе
@@ -45,63 +42,59 @@ class ContactForm extends Component {
       );
       return;
     }
-    this.props.Submit(this.state);
+    props.Submit(e);
 
-    this.reset();
+    reset();
   };
 
-  handleChange = e => {
+  const handleChange = e => {
     const key = e.target.name;
     const value = e.target.value;
-    this.setState({
-      [key]: value,
-    });
+    setState(prevState => ({ ...prevState, [key]: value }));
   };
 
-  reset = () => {
-    this.setState({
+  const reset = () => {
+    setState({
       name: '',
       number: '',
     });
   };
 
-  render() {
-    return (
-      <form className={s.form} onSubmit={this.handleSubmit}>
-        <label className={s.label}>
-          <span>Name</span>
-          <input
-            type="text"
-            name="name"
-            className={s.input}
-            onChange={this.handleChange}
-            value={this.state.name}
-            pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-            title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-            required
-            placeholder="Enter name"
-          />
-        </label>
-        <label className={s.label}>
-          <span>Number</span>
-          <input
-            type="tel"
-            name="number"
-            className={s.input}
-            onChange={this.handleChange}
-            value={this.state.number}
-            placeholder="Enter number"
-            pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
-            title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
-            required
-          />
-        </label>
-        <button type="submit" className={s.button}>
-          Add contact
-        </button>
-      </form>
-    );
-  }
+  return (
+    <form className={s.form} onSubmit={handleSubmit}>
+      <label className={s.label}>
+        <span>Name</span>
+        <input
+          type="text"
+          name="name"
+          className={s.input}
+          onChange={handleChange}
+          value={state.name}
+          pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
+          title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
+          required
+          placeholder="Enter name"
+        />
+      </label>
+      <label className={s.label}>
+        <span>Number</span>
+        <input
+          type="tel"
+          name="number"
+          className={s.input}
+          onChange={handleChange}
+          value={state.number}
+          placeholder="Enter number"
+          pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
+          title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
+          required
+        />
+      </label>
+      <button type="submit" className={s.button}>
+        Add contact
+      </button>
+    </form>
+  );
 }
 
 ContactForm.propTypes = {

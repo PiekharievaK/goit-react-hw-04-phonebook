@@ -1,71 +1,69 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import ContactForm from './NewContactForm/NewContactForm';
 import ContactsList from './ContactsList/ContactsList';
 import Filter from './ContactsFilter/ContactsFilter';
 import { Confirm } from 'notiflix';
 
-class App extends Component {
-  state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    name: '',
-  };
+const initialState = [
+  { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
+  { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
+  { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
+  { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
+];
 
-  componentDidMount() {
-    if (!localStorage.getItem('contacts')) {
-      return;
-    }
-    this.setState({ contacts: JSON.parse(localStorage.getItem('contacts')) });
-  }
+function App() {
+  const [contactsList, setContactsList] = useState(() => {
+    return JSON.parse(localStorage.getItem('contacts')) ?? initialState;
+  });
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts === this.state.contacts) {
-      return;
-    }
-    localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-  }
+  const [filter, setFilter] = useState('');
 
-  saveContact = data => {
+  const saveContact = e => {
+    e.preventDefault();
+
     const shortid = require('shortid');
+    const name = e.target.elements.name.value;
+    const number = e.target.elements.number.value;
 
-    const { name, number } = data;
     const contactInfo = { id: shortid(), name: name, number: number };
-    this.setState(prevState => ({
-      contacts: [contactInfo, ...prevState.contacts],
-    }));
+    setContactsList(prevState => [contactInfo, ...prevState]);
+    localStorage.setItem(
+      'contacts',
+      JSON.stringify([contactInfo, ...contactsList])
+    );
   };
 
-  deleteContact = e => {
+  const deleteContact = e => {
     const id = e.target.id;
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
+    setContactsList(prevState =>
+      prevState.filter(contact => contact.id !== id)
+    );
+    localStorage.setItem(
+      'contacts',
+      JSON.stringify([...contactsList.filter(contact => contact.id !== id)])
+    );
   };
 
-  changeFilter = e => {
-    this.setState({ name: e.target.value });
+  const changeFilter = e => {
+    setFilter(e.target.value);
   };
 
-  findContacts = fieldValue => {
-    const { contacts } = this.state;
-    const loverValue = fieldValue.toLowerCase();
-    const filteredContacts = contacts.filter(contact => {
+  const findContacts = fieldValue => {
+    const lowerValue = fieldValue.toLowerCase();
+    const filteredContacts = contactsList.filter(contact => {
       return (
-        contact.name.toLowerCase().includes(loverValue) ||
-        contact.number.includes(loverValue)
+        contact.name.toLowerCase().includes(lowerValue) ||
+        contact.number.includes(lowerValue)
       );
     });
     return filteredContacts;
   };
 
   //   Дополнительный функционал
-  changeInfo = e => {
-    const contacts = this.state.contacts;
-    const contact = contacts.find(contact => contact.id === e.target.id);
+  const changeInfo = e => {
+    const ChangeInfoList = contactsList;
+    const contact = contactsList.find(contact => contact.id === e.target.id);
+    const contactIdx = ChangeInfoList.indexOf(contact);
 
     Confirm.prompt(
       'Choose what you want to change',
@@ -87,10 +85,10 @@ class App extends Component {
         if (!result) {
           return;
         }
+        ChangeInfoList[contactIdx].name = clientAnswer;
 
-        contact.name = clientAnswer;
-        localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-        this.setState({ contacts: this.state.contacts });
+        localStorage.setItem('contacts', JSON.stringify(ChangeInfoList));
+        setContactsList(JSON.parse(localStorage.getItem('contacts')));
       },
 
       clientAnswer => {
@@ -107,35 +105,31 @@ class App extends Component {
           return;
         }
 
-        contact.number = clientAnswer;
-        localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-        this.setState({ contacts: this.state.contacts });
+        ChangeInfoList[contactIdx].number = clientAnswer;
+        localStorage.setItem('contacts', JSON.stringify(ChangeInfoList));
+        setContactsList(JSON.parse(localStorage.getItem('contacts')));
       },
       {}
     );
   };
 
-  render() {
-    return (
-      <>
-        <h1>Phonebook</h1>
-        <ContactForm
-          contactsArr={this.state.contacts.map(contact =>
-            contact.name.toLowerCase()
-          )}
-          Submit={this.saveContact}
-        />
+  return (
+    <>
+      <h1>Phonebook</h1>
+      <ContactForm
+        contactsArr={contactsList.map(contact => contact.name.toLowerCase())}
+        Submit={saveContact}
+      />
 
-        <h2>Contacts</h2>
-        <Filter value={this.state.name} changeFilter={this.changeFilter} />
-        <ContactsList
-          data={this.findContacts(this.state.name)}
-          deleteFoo={this.deleteContact}
-          ChangeFoo={this.changeInfo}
-        />
-      </>
-    );
-  }
+      <h2>Contacts</h2>
+      <Filter value={filter} changeFilter={changeFilter} />
+      <ContactsList
+        data={findContacts(filter)}
+        deleteFoo={deleteContact}
+        ChangeFoo={changeInfo}
+      />
+    </>
+  );
 }
 
 export default App;
